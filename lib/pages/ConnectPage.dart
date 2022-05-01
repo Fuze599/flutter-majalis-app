@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:majalis_app/datas/NotificationModule.dart';
 
 class ConnectPage extends StatelessWidget {
   final _connectFunction;
@@ -63,12 +64,7 @@ class ConnectPage extends StatelessWidget {
                       await _connectFunction(nameController.text, passwordController.text);
                       Navigator.pushNamed(context, '/homepage');
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          backgroundColor: Colors.indigo,
-                          content: Text('Adresse email ou mot de passe incorrecte'),
-                        ),
-                      );
+                      NotificationModule.getNotification(context, 'Adresse email ou mot de passe incorrecte');
                     }
                   },
                 )

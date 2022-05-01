@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:majalis_app/datas/NotificationModule.dart';
+import '../domain/Client.dart';
 
 class HomePage extends StatefulWidget {
   final String title;
@@ -6,8 +9,10 @@ class HomePage extends StatefulWidget {
   final Function _getUserByNumberFunction;
   final Function _getUsersBySearchFunction;
   final Function _insertCardLineFunction;
+  final Function _insertClientFunction;
 
-  const HomePage(this.title, this._disconnectFunction, this._getUserByNumberFunction, this._getUsersBySearchFunction, this._insertCardLineFunction, {Key? key}) : super(key: key);
+  const HomePage(this.title, this._disconnectFunction, this._getUserByNumberFunction, this._getUsersBySearchFunction, this._insertCardLineFunction,
+                  this._insertClientFunction, {Key? key}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -21,7 +26,10 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     TextEditingController phoneNumberController = TextEditingController();
     TextEditingController amountController = TextEditingController();
-    TextEditingController searchController = TextEditingController();
+    TextEditingController firstnameController = TextEditingController();
+    TextEditingController lastnameController = TextEditingController();
+    TextEditingController emailController = TextEditingController();
+    String searchText = "";
 
     return Scaffold(
       appBar: AppBar(
@@ -86,57 +94,78 @@ class _HomePageState extends State<HomePage> {
                                                 style: TextStyle(fontSize: 20),
                                               ),
                                               const SizedBox(height: 30),
-                                              const TextField(
-                                                decoration: InputDecoration(
+                                              TextField(
+                                                onChanged: (String text) {
+                                                  setState(() {
+                                                    searchText = text;
+                                                  });
+                                                },
+                                                decoration: const InputDecoration(
                                                   border: OutlineInputBorder(),
                                                   labelText: 'Rechercher un client',
                                                 ),
                                               ),
-                                              ListView(
-                                                shrinkWrap: true,
-                                                children: [
-                                                  Container(
-                                                    margin: const EdgeInsets.all(10),
-                                                    color: Colors.green,
-                                                    child: ExpansionPanelList(
-                                                      animationDuration: const Duration(milliseconds: 2000),
-                                                      children: [
-                                                        ExpansionPanel(
-                                                          headerBuilder: (context, isExpanded) {
-                                                            return Column(
-                                                              mainAxisSize: MainAxisSize.min,
-                                                              children: const <Widget>[
-                                                                ListTile(
-                                                                  leading: Icon(
+                                          FutureBuilder<List<Client>>(
+                                            future: widget._getUsersBySearchFunction(searchText),
+                                            builder: (context, snapshot) {
+                                              if (snapshot.hasData) {
+                                                return ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount: snapshot.data!.length,
+                                                  itemBuilder: (context, index) {
+                                                    return Container(
+                                                      margin: const EdgeInsets.all(10),
+                                                      color: Colors.green,
+                                                      child: ExpansionPanelList(
+                                                        animationDuration: const Duration(milliseconds: 500),
+                                                        children: [
+                                                          ExpansionPanel(
+                                                            headerBuilder: (context, isExpanded) {
+                                                              return Column(
+                                                                mainAxisSize: MainAxisSize.min,
+                                                                children: <Widget>[
+                                                                  ListTile(
+                                                                    leading: const Icon(
                                                                       Icons.account_box_rounded,
-                                                                    size: 50,
+                                                                      size: 50,
+                                                                    ),
+                                                                    title: Text(snapshot.data![index].firstname + " " +
+                                                                                  snapshot.data![index].lastname),
+                                                                    subtitle: Text('Depuis le ' + DateFormat('dd/MM/yyyy')
+                                                                                .format(DateTime.parse(snapshot.data![index].dateCreation))),
+                                                                    trailing: Text("Dernière remise : 20€ le 21/08/2022"),
                                                                   ),
-                                                                  title: Text('François Bardijn'),
-                                                                  subtitle: Text('Depuis le 21/05/2021'),
-                                                                  trailing: Text("Dernière remise : 20€ le 21/08/2022"),
-                                                                ),
-                                                              ],
-                                                            );
-                                                          },
-                                                          body:const ListTile(
-                                                            title: Text('Description text',style: TextStyle(color: Colors.black)),
+                                                                ],
+                                                              );
+                                                            },
+                                                            body:const ListTile(
+                                                              title: Text('Description text',style: TextStyle(color: Colors.black)),
+                                                            ),
+                                                            isExpanded: _isExpanded,
+                                                            canTapOnHeader: true,
                                                           ),
-                                                          isExpanded: _isExpanded,
-                                                          canTapOnHeader: true,
-                                                        ),
-                                                      ],
-                                                      dividerColor: Colors.grey,
-                                                      expansionCallback: (panelIndex, isExpanded) {
-                                                        _isExpanded = !_isExpanded;
-                                                        setState(() {
+                                                        ],
+                                                        dividerColor: Colors.grey,
+                                                        expansionCallback: (panelIndex, isExpanded) {
+                                                          _isExpanded = !_isExpanded;
+                                                          setState(() {
 
-                                                        });
-                                                      },
+                                                          });
+                                                        },
 
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              } else if (snapshot.hasError) {
+                                                return Text('${snapshot.error}');
+                                              }
+                                              return Column(children: const [
+                                                SizedBox(height: 20),
+                                                CircularProgressIndicator(),
+                                              ]);
+                                            },
+                                          ),
                                             ],
                                           ),
                                         );
@@ -173,6 +202,7 @@ class _HomePageState extends State<HomePage> {
                                                 ),
                                                 const SizedBox(height: 30),
                                                 TextField(
+                                                  keyboardType: TextInputType.phone,
                                                   controller: phoneNumberController,
                                                   decoration: const InputDecoration(
                                                     border: OutlineInputBorder(),
@@ -181,6 +211,7 @@ class _HomePageState extends State<HomePage> {
                                                 ),
                                                 const SizedBox(height: 30),
                                                 TextField(
+                                                  keyboardType: const TextInputType.numberWithOptions(signed: false, decimal: true),
                                                   controller: amountController,
                                                   decoration: const InputDecoration(
                                                     border: OutlineInputBorder(),
@@ -197,44 +228,61 @@ class _HomePageState extends State<HomePage> {
                                                       onPressed: () async {
                                                         if (phoneNumberController.value.text.isNotEmpty
                                                           && amountController.value.text.isNotEmpty) {
+                                                          if (pwdWidgets.isNotEmpty) {
+                                                            if (lastnameController.value.text.isNotEmpty &&
+                                                                firstnameController.value.text.isNotEmpty &&
+                                                                emailController.value.text.isNotEmpty) {
+
+                                                              bool isUserInserted = await widget._insertClientFunction(emailController.value.text,
+                                                                  lastnameController.value.text, firstnameController.value.text,
+                                                                  phoneNumberController.value.text);
+
+                                                              if (!isUserInserted) {
+                                                                Navigator.pop(context);
+                                                                NotificationModule.getNotification(context, 'L\'utilisateur n\'a pas été inséré');
+                                                                return;
+                                                              }
+
+                                                            } else {
+                                                              Navigator.pop(context);
+                                                              NotificationModule.getNotification(context, 'Veuillez remplir tous les champs');
+                                                              return;
+                                                            }
+                                                          }
                                                           try {
                                                             int idClient = await widget._getUserByNumberFunction(phoneNumberController.value.text);
                                                             try {
                                                               await widget._insertCardLineFunction(idClient.toString(), amountController.value.text);
                                                               Navigator.pop(context);
-                                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                                const SnackBar(
-                                                                  backgroundColor: Colors.indigo,
-                                                                  content: Text('Ligne ajoutée'),
-                                                                ),
-                                                              );
+                                                              NotificationModule.getNotification(context, 'Ligne ajoutée');
+                                                              return;
                                                             } catch (e) {
                                                               Navigator.pop(context);
-                                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                                const SnackBar(
-                                                                  backgroundColor: Colors.indigo,
-                                                                  content: Text('Pb d\'insertion'),
-                                                                ),
-                                                              );
+                                                              NotificationModule.getNotification(context, 'Problème d\'insertion de la ligne');
+                                                              return;
                                                             }
                                                           } catch (e) {
                                                             setState(() {
                                                               pwdWidgets = [
                                                                 const SizedBox(height: 30),
                                                                 Row(
-                                                                  children: const [
+                                                                  children: [
                                                                     Flexible(
                                                                       child: TextField(
-                                                                        decoration: InputDecoration(
+                                                                        keyboardType: TextInputType.name,
+                                                                        controller: lastnameController,
+                                                                        decoration: const InputDecoration(
                                                                           border: OutlineInputBorder(),
                                                                           labelText: 'Nom',
                                                                         ),
                                                                       ),
                                                                     ),
-                                                                    SizedBox(width: 30),
+                                                                    const SizedBox(width: 30),
                                                                     Flexible(
                                                                       child: TextField(
-                                                                        decoration: InputDecoration(
+                                                                        keyboardType: TextInputType.name,
+                                                                        controller: firstnameController,
+                                                                        decoration: const InputDecoration(
                                                                           border: OutlineInputBorder(),
                                                                           labelText: 'Prénom',
                                                                         ),
@@ -243,8 +291,10 @@ class _HomePageState extends State<HomePage> {
                                                                   ],
                                                                 ),
                                                                 const SizedBox(height: 30),
-                                                                const TextField(
-                                                                  decoration: InputDecoration(
+                                                                TextField(
+                                                                  keyboardType: TextInputType.emailAddress,
+                                                                  controller: emailController,
+                                                                  decoration: const InputDecoration(
                                                                     border: OutlineInputBorder(),
                                                                     labelText: 'Adresse email',
                                                                   ),
@@ -254,17 +304,9 @@ class _HomePageState extends State<HomePage> {
                                                           }
                                                         } else {
                                                           Navigator.pop(context);
-                                                          ScaffoldMessenger.of(context).showSnackBar(
-                                                            const SnackBar(
-                                                              backgroundColor: Colors.indigo,
-                                                              content: Text('Veuillez remplir tous les champs'),
-                                                            ),
-                                                          );
+                                                          NotificationModule.getNotification(context, 'Veuillez remplir tous les champs');
+                                                          return;
                                                         }
-                                                        //await widget._getUserByNumberFunction("0477316510");
-                                                        // print(phoneNumberController.value.text);
-                                                        // print(amountController.value.text);
-                                                        // print(await widget._getUserByNumberFunction("0477316510"));
                                                       },
                                                     )),
                                               ],
