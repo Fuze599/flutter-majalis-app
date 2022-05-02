@@ -20,12 +20,11 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _token = 'RIP';
+  String _token = "";
 
 
   @override
   Widget build(BuildContext context) {
-    print(_token);
     return MaterialApp(
       title: MyApp._title,
       theme: ThemeData(
@@ -35,7 +34,8 @@ class _MyAppState extends State<MyApp> {
       initialRoute: '/',
       routes: {
         '/': (context) => ConnectPage(MyApp._title, _connect),
-        '/homepage': (context) => HomePage(MyApp._title, _disconnect, _getUserByNumber, _getUserBySearch, _insertCardLine, _addNewClient),
+        '/homepage': (context) => HomePage(MyApp._title, _disconnect, _getUserByNumber, _getUserBySearch, _insertCardLine, _addNewClient,
+            _getLastPromotion),
       },
     );
   }
@@ -102,6 +102,20 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  Future<String> _getLastPromotion(int idUser) async {
+    var response = await http.get(
+      Uri.parse('https://majalis-back.herokuapp.com/clients/promotion/' + idUser.toString()),
+      headers: <String, String>{
+        "Authorization": _token.replaceAll("\"", "")
+      },
+    );
+    if (response.statusCode == 200) {
+      return response.body;
+    } else {
+      throw Exception("Failed to load the promotion! \nStatus code : ${response.statusCode}");
+    }
+  }
+
   Future<int> _getUserByNumber(String numeroTel) async {
     var response = await http.get(
       Uri.parse('https://majalis-back.herokuapp.com/clients/number/' + numeroTel),
@@ -137,7 +151,7 @@ class _MyAppState extends State<MyApp> {
 
   void _disconnect() {
     setState(() {
-      _token = "RIP";
+      _token = "";
     });
   }
 }
