@@ -22,7 +22,6 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _token = "";
 
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -30,7 +29,6 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         primarySwatch: Colors.indigo
       ),
-      //home: screen,
       initialRoute: '/',
       routes: {
         '/': (context) => ConnectPage(MyApp._title, _connect),
